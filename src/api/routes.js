@@ -46,9 +46,11 @@ router.delete("/privateChat/deleteConvo/:userId/:recipeintId", (req,res) => {
 });
 
 
-router.get("encodeHelper/:msgs", (req, res) => {
+router.get("/encryptHelper/:userId/:doWhat", (req, res) => {
 
-	db.encodeHelper(req.params.msgs, res);
+	// res.send("Hey");
+	
+	db.encryptHelper(res, req.params.userId, req.params.doWhat,req.query.key, req.query.secDoc);
 });
 
 

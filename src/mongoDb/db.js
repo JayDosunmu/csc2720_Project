@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import colors from 'colors';
 import {ObjectId} from 'mongodb';
 import _ from 'underscore';
+import superagent from 'superagent';
 
 
 
@@ -15,12 +16,21 @@ const  myUtil = new Util();
 //-----------------------------------
 
 
-
+//get production url or localhost or exit with failure code
 if(process.env.NODE_ENV == "production")
 {
-	//...mongoLab URL...
-	mongoose.connect("mongodb://WiseNN:Bladerz1@ds113606.mlab.com:13606/chatappproject");
-	console.log("production...".green)
+	if(process.env.dbUrl != null || process.env.dbUrl != "")
+	{
+		
+		mongoose.connect(process.env.dbUrl);
+		console.log("production...".green)
+	}else{
+		console.log("DATABASE URL HAS BEEN OFFLOADED, PLEASE CONTACT AN APPLICATION ADMINISTRATOR".red.bgWhite);
+		console.log("DATABASE URL HAS BEEN OFFLOADED, PLEASE CONTACT AN APPLICATION ADMINISTRATOR".red.bgWhite);
+
+		process.exit(1);
+	}
+	
 }else{
 	mongoose.connect('mongodb://localhost/chatAppProject');	
 	console.log("development...".green)
@@ -38,6 +48,8 @@ var callNum = 0;
 import dbSchema from './dbSchema';
 //get Models from mongoose Schema 
 const userPrivateConvos = mongoose.model('UserPrivateConvos');
+
+const groupChat = mongoose.model('GroupChat');
 // const privateConvo = mongoose.model('PrivateConvo');
 const message = mongoose.model('Message');
 const users = mongoose.model('Users');
@@ -323,7 +335,6 @@ export default class chatAppDb
 
 						console.log("trip 2");
 		
-
 					const dateTime = myUtil.getDateAndTime();
 
 						debugger;
@@ -431,31 +442,211 @@ export default class chatAppDb
 		    }
 		});
 	}
-	//Sends a request to java server to encrpt data
-	encodeHelper(msgObj, response)
+	
+
+
+	addGroupMsg(userObj)
 	{
-		const requestOptions = {
-			url: "https://javachatapp-dataserver.herokuapp.com/",
-			method: "GET",
-			json:{message: "Hello there from node javascript"},
-			qs: {}
+		//this is an object to access a userPost for a group message 
+		userObj.userPosts[i].userId;
+		userObj.userPost[i].message;
+	}
 
+	createGroupChat(groupChatId)
+	{
+		groupChat.find(function(err,doc){
+			//...
+		});
+	}
+	
+	//Sends a request to java server to encrpt data
+	encryptHelper(response,userId,doWhat,key, secDoc)
+	{
+		debugger;
+		const jsonObj = {
+			"_id": "WiseN",
+			"__v": 4,
+			"privateConvos": [
+			  {
+			     "recipientId": "TaslimD",
+			     "_id": "WiseN",
+			     "__v": 0,
+			     "messages": [
+			        {
+			           "_id": "5a130b5ac9b53d2d73e10952",
+			           "text": "Hey Whats Up", 
+			           "sender": "WiseN",
+			           "time": " 12:05:29 GMT-0500 (EST)",
+			           "date": "October 20, 2017"
+			        },
+			        {
+			           "_id": "5a130c2fc9b53d2d73e10953",
+			           "text": "Hey, Nothing much, this API has really been kicking my ass", 
+			           "sender": "TaslimD",
+			           "time": " 12:09:03 GMT-0500 (EST)",
+			           "date": "October 20, 2017"
+			        },
+			        {
+			           "_id": "5a130c70c9b53d2d73e10954",
+			           "text": "I bet. This homework as pretty much taken over my life. Im just trying to stay a float lol",
+			           "sender": "WiseN",
+			           "time": " 12:10:08 GMT-0500 (EST)",
+			           "date": "October 20, 2017"
+			        }
+			     ]
+			  }
+			   
+			]
 		};
-		const that = this;
-		request(requestOptions, function(err, response, body){
-			if(!err && body)
+
+		
+		//if there is no key and this is a decrypt request abort
+		if((key == "" || key == null || key == undefined) && doWhat == "decrypt")
+		{
+			const responseMsg = "there is no key to decrypt with";
+			sendJSONorSocketresponse(response,400,{error: true, success:false, msg:responseMsg}, null);
+			console.log(responseMsg);
+			return "";
+
+		}
+		else if (doWhat == "encrypt")
+		{
+			if(!(key == "" || key == null || key == undefined))
 			{
-				// response
+				const responseMsg = "calling encrypt with a decryption key is not allowed. Bad request.";
+				sendJSONorSocketresponse(response,400,{error: true, success:false, msg:responseMsg}, null);
+				console.log(responseMsg);
+				return "";				
 			}
-			else if (err)
+			
+		}
+
+		var reqUrl = "";
+		if(process.env.NODE_ENV == "production")
+		{
+			switch(doWhat)
 			{
+				case "encrypt":  reqUrl = process.env.encryptUrl;
+					break;
+				case "decrypt" : reqUrl = process.env.decryptUrl;
+					break;
+				default: 
+					console.log("FATAL ERROR FROM: encryptHelper()");
+			}
+			
+		}
+		else
+		{
+			//get cooresponding URL for encrypt or decrytion, if  doWhat is not specified, quit (conmment when testing)
+			switch(doWhat)
+			{
+				case "encrypt":  reqUrl = 'http://localhost:4567/encryptData';
+					break;
+				case "decrypt" : reqUrl = 'http://localhost:4567/decryptData';
+					break;
+				default: 
+
+					console.log("FATAL ERROR FROM: encryptHelper()...option for encryption or decryption has not been set");
+					// return "";
+			}
+
+		}
+		const that = this;
+		//get all users messages to encrypt from db
+		userPrivateConvos.findById(userId,function(err,doc){
+debugger;
+			
+			if(err)
+			{
+				const responseMsg = err;
+
+				that.sendJSONorSocketresponse(response,400,{error: true, success:false, msg:responseMsg}, null);
 
 			}
-			else if (!body)
+			else if(!doc)
 			{
-				const responseMsg = "Something Has went wrong, there is no data. Please contact a Server Administrator Immediately"
-				
-				that.sendJSONorSocketresponse(response, 500, {error:true, success:false, msg:responseMsg});
+				const responseMsg = "there was no user in the database by that username: encryptHelper()";
+
+				that.sendJSONorSocketresponse(response,404,{error: true, success:false, msg:responseMsg}, null);
+			}
+			else
+			{	
+					
+				var sendDoc = "";
+					if(doWhat == "decrypt")
+					{
+						doc = JSON.parse(secDoc);
+						sendDoc = doc;
+					}else{
+						 sendDoc = JSON.stringify(doc);	
+					}
+					
+
+					// else if(doWhat == "decrypt" && typeof secDoc != undefined)
+					// {
+					// 	console.log("THERE IS NO SECURE DOC TO DECRYPT".red.bgBlack);
+					// }
+					console.log("URL: "+reqUrl);
+					console.log(("doc--: "+doc).green);
+					// console.log(("DB-DOC:"+JSON.stringify(doc,null,3)).green.bgBlack);
+
+					//send request to java server
+					superagent.get(reqUrl)
+					.query({"dataObj":sendDoc , "doWhat": doWhat, "key":key})
+					 // .set('accept', 'json')
+					 //  .set('content-type', 'application/json')
+					.end((err, res) => 
+					{
+debugger;
+						
+
+						
+
+					 //  if(err && res) 
+					 //  {
+					 //  	const responseObj = JSON.parse(res.text);
+					 //  	console.log(("res: "+JSON.stringify(responseObj,null,3)).white.bgBlack);
+						// console.log(("resFULL: "+JSON.stringify(res,null,3)).white.bgBlack);
+
+					 //  	const responseMsg = "Succeded with error: "+err;
+					 //  	console.log(("ERR: "+err).red.bgWhite);
+					 //  	console.log(("BODY: "+res.req).green.bgBlack);
+					 //  	// console.log(("EXPLAINATION"+res.body.explanation).magenta.bgBlack);
+
+					 //  	that.sendJSONorSocketresponse(response,200,{error: true, success:true, msg:responseMsg, obj:responseObj}, null);
+					 //  }
+					  if(err)
+					  {
+					  	const responseMsg = err;
+					  	console.log(("ERR: "+err).red.bgWhite);
+
+					  	that.sendJSONorSocketresponse(response,400,{error: true, success:false, msg:responseMsg}, null);
+					  }
+					  else if(!res)
+					  {
+					  	
+					  	const responseMsg = "there was no response, check the java server";
+					  	console.log(responseMsg.red.bgWhite);
+					  	that.sendJSONorSocketresponse(response,404,{error: true, success:false, msg:responseMsg}, null);
+
+					  }else{
+
+					  	
+					  	console.log(("BODY: "+res.body.url).green.bgBlack);
+					  	console.log(("EXPLAINATION"+res.body.explanation).magenta.bgBlack);
+					  	
+					  	const responseObj = JSON.parse(res.text);
+					  	console.log(("res: "+JSON.stringify(responseObj,null,3)).white.bgBlack);
+						console.log(("resFULL: "+JSON.stringify(res,null,3)).white.bgBlack);
+
+
+					  	const responseMsg = "success";
+					  	that.sendJSONorSocketresponse(response,200,{error: false, success:true, msg:responseMsg, obj:responseObj}, null);
+
+					  }
+
+					});
+
 			}
 		});
 	}
@@ -484,17 +675,17 @@ export default class chatAppDb
 							if(doc && !err)
 							{
 								const responseMsg = "Reading Database";
-								that.sendJSONorSocketresponse(response, 200, {error:false, success:true, msg:responseMsg, obj: doc});
+								that.sendJSONorSocketresponse(response, 200, {error:false, success:true, msg:responseMsg, obj: doc},null);
 							}//if err, send err
 							else if(err)
 							{
 								const responseMsg = "ERR: "+err;
-								that.sendJSONorSocketresponse(response, 500, {error:true, success:false, msg:responseMsg});
+								that.sendJSONorSocketresponse(response, 500, {error:true, success:false, msg:responseMsg},null);
 							}//if doc is not present, save doc and update userPrivateConvos
 							else if(!doc)
 							{
 								const responseMsg = "The user: "+userId+" does ont exist";
-								that.sendJSONorSocketresponse(response, 404, {error:false, success:true, msg:responseMsg});
+								that.sendJSONorSocketresponse(response, 404, {error:false, success:true, msg:responseMsg},null);
 							}
 					});
 		}
@@ -513,6 +704,7 @@ export default class chatAppDb
 		//if doc is not undefined/null
 		if(typeof doc != null)
 		{
+			debugger;
 			console.log("trip 13");
 			const that = this;
 			//save dat
@@ -670,5 +862,6 @@ const db1 = new chatAppDb();
 // db1.addUser("WiseNN");
 // db1.addVoiceRecognitionId("WiseNN","kjdns89d8dshcsiudIWEUHIUWE");
 // db1.removeUser("WiseNN");
+// db1.encryptHelper(null,"WiseNN","encrypt");
 
 

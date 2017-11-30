@@ -26,7 +26,8 @@ We are building a Web Chat Application that will contain a smooth user interface
 
 
 <h3>Client-Side Usage</h3>
-The UI is Currently in BETA 1 testing phase, and does not have all of the visual features that would complement using the Private Messenger. Therefore, there are certain guidelines to use it until more UI has been added.
+The UI is Currently in BETA 1 testing phase, and does not have all of the visual features that would complement using the Private Messenger. Therefore, there are certain guidelines to use it until more UI has been added.<b>Currently, this application is experiencing bugs in the Safari browser. This issue is being investigated.</b>
+
 <ul>
 <li>
 <h4>Initial Load: </h4> The landing page: <code>https://chatappproject.herokuapp.com</code>, load a blank chat interface, simply because no user or recipient has been entered into the search query parameters of the URL. This is not an error.
@@ -37,7 +38,7 @@ The UI is Currently in BETA 1 testing phase, and does not have all of the visual
 <h4>Starting a Chat: </h4> In order to start a chat between two users, you must type both users into the corresponding query parameters: user, recipient of the url address: <code>https://chatappproject.herokuapp.com?user=<b>senderId</b>&recipient=<b>recipientId</b></code>
 </li>
 <li>
-<h4>Mobile Usage: </h4> While are are able to load the chat website on a mobile device, because it is not configured for touch events the send button will not respond, rendering the application unusable on mobile platforms. This will soon change with an update, but is currently the case.
+<h4>Mobile Usage: </h4> While you are able to load the chat website on a mobile device, because it is not configured for touch events the send button will not respond, rendering the application unusable on mobile platforms. This will soon change with an update, but is currently the case.
 </li>
 </ul>
 

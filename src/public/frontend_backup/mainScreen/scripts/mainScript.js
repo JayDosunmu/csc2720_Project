@@ -1,5 +1,12 @@
+debugger;
+var initialLoad = true;
+var url2 = new URL(window.location.href);
+    var me = url2.searchParams.get("user");
+     
+    var you = url2.searchParams.get("recipient");
+  
+  var socket;
 
-  var socket;debugger;
   if(window.location.port != "")
   {
     url = window.location.protocol+"//"+window.location.hostname+":"+window.location.port;
@@ -15,19 +22,24 @@
   
   document.addEventListener("DOMContentLoaded", function(event) {
           
-          const elm = document.getElementById('sendBtnId');
+          const sendBtn = document.getElementById('sendBtnId');
           var passiveSupported = false;
           
-          elm.addEventListener("mouseup", handleMouseUp, passiveSupported
+          sendBtn.addEventListener("mouseup", msgSendHandler, passiveSupported
                                ? { passive: true } : false);
+          
+          const encodeBtn = document.getElementById("myEncodeBtn");
+          encodeBtn.addEventListener("mouseup", encryptBtnHandler, passiveSupported
+                               ? { passive: true } : false);
+
+
 
   });
 
 
+
 //add username to the ?user=[username] & ?recipient=[recipientUsername] query param to get a specific user's message box
-    var url2 = new URL(window.location.href);
-    var me = "";url2.searchParams.get("user");
-    var you = "";url2.searchParams.get("recipient");
+    
   
   window.onload = () =>
   {
@@ -35,8 +47,7 @@
 
      debugger;
 
-     me = url2.searchParams.get("user");
-     you = url2.searchParams.get("recipient");
+    initialLoad = true;
      
 
     //if either param is empty, do not bring up user's thread
@@ -48,7 +59,8 @@
     }
 
   
-    const url = createUrl(window.location.host, 'api/getMessages/', me);
+    
+    const url = createUrl(window.location.host, '/api/getMessages/', me);
 
      $.ajax({url: url, async: true, success: function(result){
             debugger;
@@ -57,13 +69,11 @@
       });
   }  
 
-const createUrl = (host, path, params) =>
-{
-  debugger;
-  return window.location.protocol+"/"+path+params;
-}
 
-const handleMouseUp = function(evt){
+
+const msgSendHandler = function(evt){
+
+
   console.log("event handled");
   const elm = document.getElementById("myTextBox");
 
@@ -77,20 +87,149 @@ debugger;
 
 };
 
+const encryptBtnHandler = function(evt)
+{
+
+    debugger;
+      console.log("target event: "+evt.target);
+      const encodeBtn = document.getElementById(evt.target.id);
+
+      if(initialLoad)
+      {
+        sessionStorage.setItem("doWhatNext", "encrypt");
+         sessionStorage.setItem("encryptedDoc", null);
+         initialLoad = false;
+      }
+      //get doWhatNext from state, save in const
+      const doWhatNext = sessionStorage.getItem("doWhatNext");
+
+      //set do what now
+      var doWhat = "", key = "", secDoc = "";
+      
+      //if doWhatNext state has been saved, retrieve state
+      if(doWhatNext != "" || doWhatNext != null)
+      {
+        //getting state
+        encodeBtn["doWhatNext"] = doWhatNext;
+      }
+
+      //check if doWhatNext exists, if has not been set, set it
+      if(encodeBtn["doWhatNext"] == null || encodeBtn["doWhatNext"] == "")
+      {
+        
+        encodeBtn["doWhatNext"] = "encrypt";  
+      }
+      else //else get current doWhat, and set accordingly
+      {
+        switch(encodeBtn["doWhatNext"])
+        {
+          case "encrypt": 
+            encodeBtn["doWhatNext"] = "decrypt";  
+            //encrypt now (decrypt later)
+            doWhat = "encrypt";
+
+            break;
+          
+          case "decrypt": 
+            encodeBtn["doWhatNext"] = "encrypt"; 
+            //decrypt now (encrypt later)
+            doWhat = "decrypt";
+
+            //if decrypting now, get key from localStorage
+             key = sessionStorage.getItem("kissKey");
+             secDoc = JSON.stringify(sessionStorage.getItem("encryptedDoc"));
+
+             break;
+
+          //if nothing matches, throw a warning
+          default:
+          
+          console.log("encrption or decryption option has not been selected");
+          console.warn("encrption or decryption option has not been selected");
+          console.warn("encrption or decryption option has not been selected");
+        }
+      }
+      //if no key, put empty string
+      if(key == null)
+      {
+        key == "";
+
+         secDoc == "";
+       
+      }
+      if(secDoc == "")
+      {
+         secDoc == "";
+      }
+
+      //save doWhat state to sessionStorage
+      sessionStorage.setItem("doWhatNext", encodeBtn["doWhatNext"]);
+      
+
+      const url = createUrl(window.location.host, '/api/encryptHelper/', me+"/"+doWhat+"?key="+key+"&secDoc="+secDoc);
+
+     $.ajax({url: url, async: true, success: function(result){
+            debugger;
+            
+            if(doWhat == "encrypt")
+            {
+              //if sec is not empt, save kissKey
+              if(typeof result.obj.sec != "undefined" || typeof result.obj.sec != null)
+              {
+                //save kissKey & delete from object
+                sessionStorage.setItem("kissKey", result.obj.sec);
+                console.log("kissKey: "+result.obj.sec)
+                delete result.obj.sec;
+              } 
+
+              
+              
+
+
+            }
+            const temp1 = result.obj.data;
+            const temp2 = JSON.stringify(temp1);
+            sessionStorage.setItem("encryptedDoc",temp2);
+
+            loadMsgs(result);  
+        }
+      });
+
+};
+const createUrl = (host, path, params) =>
+{
+  debugger;
+  
+  return window.location.protocol+"//"+host+path+params;
+}
+
 const loadMsgs = (result) =>
 {
   var convoFrags = document.createDocumentFragment();
             var msgsFrags = document.createDocumentFragment();
 
             // console.log(JSON.stringify(result,null,3));
+            var userId = "",privateConvos = "",removeAllChildren=false;
+            
 
-            const userId = result.obj._id;
+            
 
 
             if(result.success)
             {
-              //get privateConvos
-              const privateConvos = result.obj.privateConvos;
+              
+              //test to see if calling from encrpyt or initial load
+              if(result.obj.data != undefined)
+              {
+                 userId = result.obj.data._id;
+                 privateConvos = result.obj.data.privateConvos;
+                 removeAllChildren = true;
+              }
+              else
+              {
+                userId = result.obj._id;
+                 privateConvos = result.obj.privateConvos;
+              }
 
               
               for(var i=0; i < privateConvos.length;i++)
@@ -119,8 +258,27 @@ const loadMsgs = (result) =>
               const convos = document.getElementById("convoBoxWrapper");
               const msgs = document.getElementById("msgsWrapper");
 
-              convos.appendChild(convoFrags);
-              msgs.appendChild(msgsFrags);
+              if(removeAllChildren)
+              {
+                //safely remove all children
+                while (convos.hasChildNodes()) 
+                {
+                     convos.removeChild(convos.lastChild);
+                }
+                
+                while (msgs.hasChildNodes()) 
+                {
+                     msgs.removeChild(msgs.lastChild);
+                }
+
+                
+
+              }
+                //then append child nodes
+                convos.appendChild(convoFrags);
+                msgs.appendChild(msgsFrags);  
+              
+                scrollDown();
             }
 }
 //adds a message to the msgsContainer  
@@ -222,11 +380,11 @@ socket.on('disconnect', function(){
 });
 
 
-
+debugger;
 
   socket.on('connect', function(){
-
-    
+debugger;
+    console.log("me: "+me);
     socket.emit('addCustomId', me);
 
     
@@ -241,6 +399,7 @@ socket.on('disconnect', function(){
         const elmFrag = addMsg(me, you, data);
         const msgs = document.getElementById("msgsWrapper");
         msgs.appendChild(elmFrag);  
+        scrollDown()
       }
       else if(data.error)
       {
@@ -260,6 +419,11 @@ socket.on('disconnect', function(){
       }
   });
   
+
+   function scrollDown()
+    {
+        $("#msgsWrapper").animate({ scrollTop: $("#msgsWrapper")[0].scrollHeight}, 0);
+    }
 /*
 Observations: 
 - WHenever the server sends us a 'disconnect' event, this is not dependent upon our page refresh or us disconnecting,

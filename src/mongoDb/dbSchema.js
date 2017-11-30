@@ -51,6 +51,15 @@ const users = mongoose.Schema({
 	isActive: {type: Boolean, required: true} 
 });
 
+const groupChat = mongoose.Schema({
+	_id: String,
+	userPosts: [{ //this is an array of objects that contain userPosts
+		userId: String,
+		message: String
+	}]
+});
+
+
 userPrivateConvos.index(
     { recipientId: 1},
     {
@@ -64,4 +73,5 @@ userPrivateConvos.index(
 mongoose.model('UserPrivateConvos', userPrivateConvos);
 mongoose.model('Message', userMessage);
 mongoose.model('Users', users);
+mongoose.model('GroupChat', groupChat);
 

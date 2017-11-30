@@ -5,9 +5,9 @@
   "main": "src/server.js",
   "scripts": {
     "test": "test-run",
-    "debug": "node --inspect ./src/server.js",
     "start": "node src/server.js",
-    "restart": "nodemon src/server.js"
+    "restart": "nodemon src/server.js",
+    "debug-node": "node --inspect ./src/server.js"
   },
   "repository": {
     "type": "git",
@@ -31,7 +31,8 @@
     "mongod": "^2.0.0",
     "mongodb": "^2.2.33",
     "mongoose": "^4.12.5",
-    "socket.io": "^2.0.4"
+    "socket.io": "^2.0.4",
+    "superagent": "^3.8.1"
   },
   "devDependencies": {
     "babel-cli": "^6.10.1",
