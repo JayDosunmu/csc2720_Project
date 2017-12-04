@@ -35,7 +35,7 @@ The UI is Currently in BETA 1 testing phase, and does not have all of the visual
 <li><h4>Adding A User: </h4> To add a user to the private messenger you must download <a href="https://www.getpostman.com">Postman </a>, and send a <b>POST</b> request to the url: <b><code>[domain]/api/users/createUser/:userId</code></b>. Remember to add the sender, and recipient user. 
 </li>
 <li>
-<h4>Starting a Chat: </h4> In order to start a chat between two users, you must type both users into the corresponding query parameters: user, recipient of the url address: <code>https://chatappproject.herokuapp.com?user=<b>senderId</b>&recipient=<b>recipientId</b></code>
+<h4>Starting a Chat: </h4> In order to start a chat between two users, you must type both users into the corresponding query parameters: user, recipient; of the url address: <code>https://chatappproject.herokuapp.com?user=<b>senderId</b>&recipient=<b>recipientId</b></code>
 </li>
 <li>
 <h4>Mobile Usage: </h4> While you are able to load the chat website on a mobile device, because it is not configured for touch events the send button will not respond, rendering the application unusable on mobile platforms. This will soon change with an update, but is currently the case.
