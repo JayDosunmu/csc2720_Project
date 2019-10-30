@@ -30,7 +30,7 @@ The UI is Currently in BETA 1 testing phase, and does not have all of the visual
 
 <ul>
 <li>
-<h4>Initial Load: </h4> The landing page: <code>https://chatappproject.herokuapp.com</code>, load a blank chat interface, simply because no user or recipient has been entered into the search query parameters of the URL. This is not an error.
+<h4>Initial Load: </h4> The landing page: <code>https://chatappproject.herokuapp.com</code>, loads a blank chat interface, simply because no user or recipient has been entered into the search query parameters of the URL. This is not an error.
 </li>
 <li><h4>Adding A User: </h4> To add a user to the private messenger you must download <a href="https://www.getpostman.com">Postman </a>, and send a <b>POST</b> request to the url: <b><code>[domain]/api/users/createUser/:userId</code></b>. Remember to add the sender, and recipient user. 
 </li>
